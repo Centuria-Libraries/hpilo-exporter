@@ -115,6 +115,29 @@ class RequestHandler(BaseHTTPRequestHandler):
                             else:
                                 prometheus_metrics.gauges[gauge].labels(product_name=product_name,
                                                                         server_name=server_name).set(2)
+                        if status[0] == 'redundancy':
+                            gauge = 'hpilo_{}_redundancy_gauge'.format(key)
+                            if status[1].upper() == 'REDUNDANT':
+                                prometheus_metrics.gauges[gauge].labels(product_name=product_name,
+                                                                        server_name=server_name).set(0)
+                            else:
+                                prometheus_metrics.gauges[gauge].labels(product_name=product_name,
+                                                                        server_name=server_name).set(1)
+
+            # get temperatures
+            try:
+                temperature = ilo.get_embedded_health()['temperature']
+                ambient_temperature_reading = temperature['01-Inlet Ambient']['currentreading'][0]
+                prometheus_metrics.hpilo_ambient_temperature_reading.labels(product_name=product_name, server_name=server_name).set(ambient_temperature_reading)
+
+                cpu1_temperature_reading = temperature['02-CPU 1']['currentreading'][0]
+                prometheus_metrics.hpilo_cpu1_temperature_reading.labels(product_name=product_name, server_name=server_name).set(cpu1_temperature_reading)
+
+                cpu2_temperature_reading = temperature['03-CPU 2']['currentreading'][0]
+                prometheus_metrics.hpilo_cpu2_temperature_reading.labels(product_name=product_name, server_name=server_name).set(cpu2_temperature_reading)
+            except:
+                pass
+
             # get firmware version
             fw_version = ilo.get_fw_version()["firmware_version"]
             # prometheus_metrics.hpilo_firmware_version.set(fw_version)
@@ -144,7 +167,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                             else:
                                     prometheus_metrics.gauges[gauge].labels(product_name=product_name,
                                                                             server_name=server_name).set(1)
-                                                                            
+
             # get the amount of time the request took
             REQUEST_TIME.observe(time.time() - start_time)
 
