@@ -167,6 +167,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                             else:
                                     prometheus_metrics.gauges[gauge].labels(product_name=product_name,
                                                                             server_name=server_name).set(1)
+            # get power reading
+            power_reading = ilo.get_power_readings()["present_power_reading"][0]
+            # prometheus_metrics.hpilo_present_power_reading(power_reading)
+            prometheus_metrics.hpilo_present_power_reading.labels(product_name=product_name, server_name=server_name).set(power_reading)
 
             # get the amount of time the request took
             REQUEST_TIME.observe(time.time() - start_time)
