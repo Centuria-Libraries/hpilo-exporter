@@ -4,16 +4,17 @@ Pulls data from specified iLO and presents as Prometheus metrics
 from __future__ import print_function
 from _socket import gaierror
 import sys
+import os
 import hpilo
-
 import time
+sys.path.append((os.path.dirname(os.path.abspath(__file__))))
 import prometheus_metrics
-from BaseHTTPServer import BaseHTTPRequestHandler
-from BaseHTTPServer import HTTPServer
-from SocketServer import ForkingMixIn
+from http.server import BaseHTTPRequestHandler
+from http.server import HTTPServer
+from socketserver import ForkingMixIn
 from prometheus_client import generate_latest, Summary
-from urlparse import parse_qs
-from urlparse import urlparse
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
 
 def print_err(*args, **kwargs):
@@ -61,7 +62,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             ilo_port = int(query_components['ilo_port'][0])
             ilo_user = query_components['ilo_user'][0]
             ilo_password = query_components['ilo_password'][0]
-        except KeyError, e:
+        except KeyError as e:
             print_err("missing parameter %s" % e)
             self.return_error()
             error_detected = True
@@ -80,7 +81,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             except gaierror:
                 print("ILO invalid address or port")
                 self.return_error()
-            except hpilo.IloCommunicationError, e:
+            except hpilo.IloCommunicationError as e:
                 print(e)
 
             # get product and server name
@@ -114,23 +115,6 @@ class RequestHandler(BaseHTTPRequestHandler):
                             else:
                                 prometheus_metrics.gauges[gauge].labels(product_name=product_name,
                                                                         server_name=server_name).set(2)
-            #for iLO3 patch network
-            if ilo.get_fw_version()["management_processor"] == 'iLO3':
-                print_err('Unknown iLO nic status')
-            else:
-                # get nic information
-                for nic_name,nic in embedded_health['nic_information'].items():
-                   try:
-                       value = ['OK','Disabled','Unknown','Link Down'].index(nic['status'])
-                   except ValueError:
-                       value = 4
-                       print_err('unrecognised nic status: {}'.format(nic['status']))
-
-                   prometheus_metrics.hpilo_nic_status_gauge.labels(product_name=product_name,
-                                                                    server_name=server_name,
-                                                                    nic_name=nic_name,
-                                                                    ip_address=nic['ip_address']).set(value)
-
             # get firmware version
             fw_version = ilo.get_fw_version()["firmware_version"]
             # prometheus_metrics.hpilo_firmware_version.set(fw_version)
@@ -186,8 +170,7 @@ class ILOExporterServer(object):
         server.endpoint = self.endpoint
 
         try:
-            while True:
-                server.handle_request()
+            server.serve_forever()
         except KeyboardInterrupt:
             print_err("Killing exporter")
             server.server_close()
