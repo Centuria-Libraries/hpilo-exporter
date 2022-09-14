@@ -127,14 +127,17 @@ class RequestHandler(BaseHTTPRequestHandler):
             storage = embedded_health['storage']
             for key,value in storage.items():
                 if "Controller" in key:
-                    logical_drives = value['logical_drives']
+                    try:
+                        logical_drives = value['logical_drives']
 
-            for logical_drive in logical_drives:
-                for physical_drive in logical_drive['physical_drives']:
-                   if physical_drive['status'] == 'OK':
-                      prometheus_metrics.hpilo_physical_disk_status.labels(product_name=product_name, server_name=server_name, location=physical_drive['location'], serial_number=physical_drive['serial_number'], capacity=physical_drive['marketing_capacity'], media_type=physical_drive['media_type']).set(0)
-                   else:
-                      prometheus_metrics.hpilo_physical_disk_status.labels(product_name=product_name, server_name=server_name, location=physical_drive['location'], serial_number=physical_drive['serial_number'], capacity=physical_drive['marketing_capacity'], media_type=physical_drive['media_type']).set(1)
+                        for logical_drive in logical_drives:
+                            for physical_drive in logical_drive['physical_drives']:
+                                if physical_drive['status'] == 'OK':
+                                    prometheus_metrics.hpilo_physical_disk_status.labels(product_name=product_name, server_name=server_name, location=physical_drive['location'], serial_number=physical_drive['serial_number'], capacity=physical_drive['marketing_capacity'], media_type=physical_drive['media_type']).set(0)
+                                else:
+                                    prometheus_metrics.hpilo_physical_disk_status.labels(product_name=product_name, server_name=server_name, location=physical_drive['location'], serial_number=physical_drive['serial_number'], capacity=physical_drive['marketing_capacity'], media_type=physical_drive['media_type']).set(1)
+                    except:
+                        pass
 
             # get temperatures
             try:
