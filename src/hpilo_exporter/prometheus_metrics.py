@@ -27,6 +27,7 @@ hpilo_cpu1_temperature_reading = Gauge('hpilo_cpu1_temperature_reading', 'HP iLO
 hpilo_cpu2_temperature_reading = Gauge('hpilo_cpu2_temperature_reading', 'HP iLO CPU 2 temperature reading', ["product_name", "server_name"])
 hpilo_firmware_version = Gauge('hpilo_firmware_version', 'HP iLO firmware version', ["product_name", "server_name"])
 hpilo_present_power_reading = Gauge('hpilo_present_power_reading', 'HP iLO present power reading', ["product_name", "server_name"])
+hpilo_physical_disk_status = Gauge('hpilo_physical_disk_status', 'HP iLO physical disk status', ["product_name", "server_name", "location", "serial_number", "capacity", "media_type"])
 
 gauges = {
     'hpilo_vrm_gauge': hpilo_vrm_gauge,
@@ -49,4 +50,5 @@ gauges = {
     'hpilo_cpu2_temperature_reading': hpilo_cpu2_temperature_reading,
     'hpilo_firmware_version': hpilo_firmware_version,
     'hpilo_present_power_reading': hpilo_present_power_reading,
+    'hpilo_physical_disk_status': hpilo_physical_disk_status,
 }
