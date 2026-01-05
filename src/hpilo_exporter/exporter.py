@@ -52,15 +52,37 @@ class RequestHandler(BaseHTTPRequestHandler):
         error_detected = False
         query_components = parse_qs(urlparse(self.path).query)
 
-        ilo_host = None
-        ilo_port = None
-        ilo_user = None
-        ilo_password = None
+        ilo_host     = os.environ.get('ILO_HOST', None)
+        ilo_port     = os.environ.get('ILO_PORT', None)
+        ilo_user     = os.environ.get('ILO_USER', None)
+        ilo_password = os.environ.get('ILO_PASSWORD', None)
+
+        # Convert port to int if it was found in ENV
+        if ilo_port is not None:
+            ilo_port = int(ilo_port)
+
+        error_detected = False
+
+        # 2. Try to overwrite/set from query_components
         try:
-            ilo_host = query_components['ilo_host'][0]
-            ilo_port = int(query_components['ilo_port'][0])
-            ilo_user = query_components['ilo_user'][0]
-            ilo_password = query_components['ilo_password'][0]
+            # Use .get() or check if key exists to avoid the KeyError entirely 
+            # if you want the ENV variables to be valid fallbacks.
+            if 'ilo_host' in query_components:
+                ilo_host = query_components['ilo_host'][0]
+            
+            if 'ilo_port' in query_components:
+                ilo_port = int(query_components['ilo_port'][0])
+                
+            if 'ilo_user' in query_components:
+                ilo_user = query_components['ilo_user'][0]
+                
+            if 'ilo_password' in query_components:
+                ilo_password = query_components['ilo_password'][0]
+
+            # Optional: Check if we still have None for critical values
+            if None in [ilo_host, ilo_user, ilo_password]:
+                raise KeyError("One or more iLO parameters are missing from both ENV and Query")
+
         except KeyError as e:
             print_err("missing parameter %s" % e)
             self.return_error()
